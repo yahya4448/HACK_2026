@@ -1,0 +1,18 @@
+{
+  "id": null,
+  "uid": "mtta",
+  "title": "MTTA",
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Mean Time To Acknowledge (s)",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 9 },
+      "targets": [
+        { "expr": "app_mtta_seconds", "refId": "A" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": null,
+  "uid": "incidents-total",
+  "title": "Incidents - Total",
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total incidents",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 6 },
+      "targets": [
+        { "expr": "app_incidents_total", "refId": "A" }
+      ]
+    }
+  ]
+}

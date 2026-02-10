@@ -65,4 +65,35 @@ graph TD
 **Challenge :** Mesurer l'efficacité humaine.
 **Solution :** Utilisation des `Histograms` Prometheus pour calculer dynamiquement le MTTA et le MTTR.
 
+---
+
+# Incident Platform - Hackathon 2026
+
+Quick start (≤5 commands)
+1. git clone <repo-url>
+2. cd hackathon_2026/HACK_2026
+3. cp .env.example .env && edit .env (set passwords)
+4. docker compose up -d
+5. sleep 30
+
+Smoke checks (judges)
+- curl http://localhost:8001/health   # alerts-api should return 200
+- curl http://localhost:8002/health   # incidents-api
+- curl http://localhost:8003/health   # oncall-api
+- curl http://localhost:8080/health   # web-ui
+- Open http://localhost:8080 for Web UI
+- Open http://localhost:3000 for Grafana (admin password from .env)
+
+API (minimal)
+- POST /api/v1/alerts { service, severity, message } -> 201 create incident
+- GET  /api/v1/incidents -> list incidents
+- PUT  /api/v1/incidents/:id/acknowledge -> 200 ack
+- PUT  /api/v1/incidents/:id/resolve -> 200 resolve
+- GET  /api/v1/oncall/current -> current on-call
+- GET  /metrics -> Prometheus metrics (app_mtta_seconds, app_mttr_seconds, app_incidents_total)
+
+Notes
+- No hardcoded credentials in repo. Use .env file based on .env.example.
+- Prometheus scrapes services; Grafana is provisioned with 3 simple dashboards (incidents, MTTA, MTTR).
+
 

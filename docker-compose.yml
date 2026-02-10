@@ -1,83 +1,135 @@
-version: '3.8'
+version: "3.8"
 
 services:
   database:
     image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: incident_db
-    ports: ["5432:5432"]
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d incident_db"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
       timeout: 5s
       retries: 10
-
-  alert-ingestion:
-    build: ./services/alert-ingestion
-    ports: ["8001:8001"]
-    environment:
-      - DB_URL=postgresql://user:password@database:5432/incident_db
-    depends_on:
-      database:
-        condition: service_healthy
-    # 💡 On force la commande ici pour éviter l'erreur d'argument
-    command: uvicorn main:app --host 0.0.0.0 --port 8001
-    restart: always
-
-  incident-management:
-    build: ./services/incident-management
-    ports: ["8002:8002"]
-    environment:
-      - DB_URL=postgresql://user:password@database:5432/incident_db
-    depends_on:
-      database:
-        condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8002
-    restart: always
-
-  oncall-service:
-    build: ./services/oncall-service
-    ports: ["8003:8003"]
-    environment:
-      - DB_URL=postgresql://user:password@database:5432/incident_db
-    depends_on:
-      database:
-        condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8003
-    restart: always
+    networks:
+      - appnet
 
   web-ui:
-    build: ./services/web-ui
-    ports: ["8080:80"] # Vérifie si c'est 80 ou 8080 dans ton Dockerfile
+    build:
+      context: ./services/web-ui
+    image: incident-ui:web
+    environment:
+      - ROLE=web
+    ports:
+      - "8080:3000"
+    networks:
+      - appnet
+    volumes:
+      - web_data:/app/data
     depends_on:
-      - incident-management
+      - database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  alerts-api:
+    build:
+      context: ./services/web-ui
+    image: incident-ui:alerts
+    environment:
+      - ROLE=alerts
+      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+    ports:
+      - "8001:3000"
+    networks:
+      - appnet
+    depends_on:
+      - database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  incidents-api:
+    build:
+      context: ./services/web-ui
+    image: incident-ui:incidents
+    environment:
+      - ROLE=incidents
+      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+    ports:
+      - "8002:3000"
+    networks:
+      - appnet
+    depends_on:
+      - database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  oncall-api:
+    build:
+      context: ./services/web-ui
+    image: incident-ui:oncall
+    environment:
+      - ROLE=oncall
+      - DB_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database:5432/${POSTGRES_DB}
+    ports:
+      - "8003:3000"
+    networks:
+      - appnet
+    depends_on:
+      - database
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
 
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-    ports: ["9090:9090"]
-    restart: always
+    ports:
+      - "9090:9090"
+    networks:
+      - appnet
+    restart: unless-stopped
 
   grafana:
     image: grafana/grafana:latest
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning:/etc/grafana/provisioning
-      - ./grafana/dashboards:/var/lib/grafana/dashboards
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    ports: ["3000:3000"]
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+    ports:
+      - "3000:3000"
+    networks:
+      - appnet
     depends_on:
       - prometheus
-    restart: always
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    restart: unless-stopped
+
+networks:
+  appnet:
 
 volumes:
   postgres_data:
   prometheus_data:
+  web_data:
   grafana_data:

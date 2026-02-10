@@ -1,0 +1,74 @@
+version: "3.8"
+services:
+  web-ui:
+    build: .
+    image: incident-ui:web
+    ports:
+      - "3000:3000"
+    networks:
+      - appnet
+    volumes:
+      - web_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  alerts-api:
+    build: .
+    image: incident-ui:alerts
+    environment:
+      - ROLE=alerts
+    ports:
+      - "8001:3000"
+    networks:
+      - appnet
+    depends_on:
+      - web-ui
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  incidents-api:
+    build: .
+    image: incident-ui:incidents
+    environment:
+      - ROLE=incidents
+    ports:
+      - "8002:3000"
+    networks:
+      - appnet
+    depends_on:
+      - web-ui
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  oncall-api:
+    build: .
+    image: incident-ui:oncall
+    environment:
+      - ROLE=oncall
+    ports:
+      - "8003:3000"
+    networks:
+      - appnet
+    depends_on:
+      - web-ui
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  appnet:
+
+volumes:
+  web_data:

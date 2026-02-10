@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install
+        run: npm ci
+        working-directory: ./services/web-ui
+      - name: Lint
+        run: npm run lint
+        working-directory: ./services/web-ui
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install
+        run: npm ci
+        working-directory: ./services/web-ui
+      - name: Run tests
+        run: npm test -- --ci --runInBand
+        working-directory: ./services/web-ui
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Build web-ui
+        run: |
+          cd services/web-ui
+          npm ci
+          npm run build
+
+  docker-build:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build docker images
+        run: |
+          docker build -t incident-ui:ci ./services/web-ui
+
+  compose-smoke:
+    needs: docker-build
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:24-dind
+        privileged: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start compose
+        run: |
+          docker compose -f docker-compose.yml up -d
+          sleep 10
+          docker ps
+          curl -f http://localhost:8080/health
+      - name: Teardown
+        run: docker compose -f docker-compose.yml down

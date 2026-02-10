@@ -1,0 +1,18 @@
+{
+  "id": null,
+  "uid": "mttr",
+  "title": "MTTR",
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "version": 1,
+  "panels": [
+    {
+      "type": "graph",
+      "title": "Mean Time To Resolve (s)",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 9 },
+      "targets": [
+        { "expr": "app_mttr_seconds", "refId": "A" }
+      ]
+    }
+  ]
+}
