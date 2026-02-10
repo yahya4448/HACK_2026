@@ -1,0 +1,148 @@
+{
+	"info": {
+		"_postman_id": "b3456-hackathon-2026",
+		"name": "🚑 Hackathon Incident Platform",
+		"description": "Collection de démo pour le jury",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. 🔥 Créer une Alerte (CRITICAL)",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"service\": \"payment-api\",\n    \"severity\": \"critical\",\n    \"message\": \"Database connection timeout > 5000ms\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8001/api/v1/alerts",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8001",
+					"path": [
+						"api",
+						"v1",
+						"alerts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. 📋 Voir tous les incidents",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8002/api/v1/incidents",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8002",
+					"path": [
+						"api",
+						"v1",
+						"incidents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. 👀 Acknowledge Incident #1",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8002/api/v1/incidents/1/acknowledge",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8002",
+					"path": [
+						"api",
+						"v1",
+						"incidents",
+						"1",
+						"acknowledge"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. ✅ Resolve Incident #1",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8002/api/v1/incidents/1/resolve",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8002",
+					"path": [
+						"api",
+						"v1",
+						"incidents",
+						"1",
+						"resolve"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. 📞 Qui est d'astreinte ?",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8003/api/v1/oncall/current",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8003",
+					"path": [
+						"api",
+						"v1",
+						"oncall",
+						"current"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "📊 Metrics (Prometheus Format)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8001/metrics",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8001",
+					"path": [
+						"metrics"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
